@@ -1,0 +1,2 @@
+cslounge-irssi-scripts
+======================
