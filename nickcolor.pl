@@ -25,6 +25,14 @@
 # 1: just colour names of people talking (the usual behaviour)
 # 2: also colour names of people being talked to (nick: text)
 # 3: colour all nicknames that occur within all messages.
+#    (A bug in irssi's built-in highlighter makes this interact poorly with
+#     hilight -word. To fix this, apply this patch:
+#       http://www.bswolf.com/irssi/nickcolor-hilight.patch
+#     to src/fe-common/core/formats.c and recompile irssi.)
+#
+# The "nickcolor_global" variable enables colouring nicknames the same
+# across all channels. It defaults to OFF (meaning the same user may have
+# different colours in separate channels).
 #
 # -mrwright
 
@@ -42,13 +50,13 @@ use Irssi 20020101.0250 ();
 use vars qw($VERSION %IRSSI); 
 $VERSION = "1";
 %IRSSI = (
-          authors     => "Timo Sirainen, Ian Peters, Matthew Wright",
+          authors     => "Timo Sirainen, Ian Peters, Matthew Wright, bswolf",
           contact => "tss\@iki.fi", 
           name        => "Nick Color",
           description => "assign a different color for each nick",
           license => "Public Domain",
           url   => "http://irssi.org/",
-          changed => "2010-06-15"
+          changed => "2013-11-27"
          );
 
 # hm.. i should make it possible to use the existing one..
@@ -70,10 +78,6 @@ my $debuglev = 0;       # no debugging by default.
 # Level 3 = all that and also print time penalty, and last talked list.
 
 my $debug_to_file=1;
-
-# 1 = colours are global
-# 0 = colours are per-channel
-my $global=0;
 
 sub load_colors {
 	# Different filename, since we use a different system.
@@ -153,7 +157,7 @@ sub best_color {
 
 	my %color_scores;
 
-	if ($global == 1) {
+	if (Irssi::settings_get_bool('nickcolor_global') == 1) {
 		# Yes, it's a horrible hack :)
 		$channel = 'GLOBAL';
 	}
@@ -329,8 +333,8 @@ sub sig_public {
 		}
 	}
 
-	my $ch=chr(3);
-	if($level==3 && !($msg=~/($ch)/))
+	my $ch="".chr(3)."|".chr(4);
+	if($level==3 && !($msg=~/^($ch)/))
 	{
 		my $chan=$server->channel_find($target);
 
@@ -349,11 +353,11 @@ sub sig_public {
 			{
 				my $color=best_color($server, $msg, $nick, $address, $target);
 				my $tar=chr(3).$color.$nick.chr(15);
-				$msg=~s/(\b\Q$nick\E\b)/$tar/ge;
+				$msg=~s/(^|\b|\W)(\Q$nick\E)($|\b|\W)/$1.$tar.$3/ge;
 			}
 		}
 
-		$msg="".chr(3)."0".chr(15).$msg;
+		$msg="".chr(4)."g".$msg;
 
 		Irssi::signal_emit('message public', 
 											 ($server, 
@@ -375,8 +379,8 @@ sub sig_act_public {
 
 	my $mynick=$server->{nick};
 
-	my $ch=chr(3);
-	if($level==3 && !($msg=~/($ch)/))
+	my $ch="".chr(3)."|".chr(4);
+	if($level==3 && !($msg=~/^($ch)/))
 	{
 		my $chan=$server->channel_find($target);
 
@@ -395,11 +399,11 @@ sub sig_act_public {
 			{
 				my $color=best_color($server, $msg, $inick, $address, $target);
 				my $tar=chr(3).$color.$inick.chr(15);
-				$msg=~s/(\b\Q$inick\E\b)/$tar/ge;
+				$msg=~s/(^|\b|\W)(\Q$nick\E)($|\b|\W)/$1.$tar.$3/ge;
 			}
 		}
 
-		$msg="".chr(3)."0".chr(15).$msg;
+		$msg="".chr(4)."g".$msg;
 
 		Irssi::signal_emit('message irc action', 
 											 ($server, 
@@ -447,29 +451,12 @@ sub cmd_color {
 		Irssi::print ("\nSaved Colors:");
 		foreach my $nick (keys %saved_colors) {
 			Irssi::print (chr (3) . "$colors[$saved_colors{$nick}]$nick" .
-										chr (3) . "1 ($colors[$saved_colors{$nick}])");
+										chr (3) . "0 ($saved_colors{$nick})");
 		}
 	} elsif ($op eq "preview") {
 		Irssi::print ("\nAvailable colors:");
 		foreach my $i (0..10) {
 			Irssi::print (chr (3) . "$colors[$i]" . "Color #$i");
-		}
-	} elsif ($op eq "global") {
-		if ($nick eq 'on') {
-			$global = 1;
-			Irssi::print ("Global colouring enabled.");
-		} elsif ($nick eq 'off') {
-			$global = 0;
-			Irssi::print ("Global colouring disabled.");
-		} else {
-			#Irssi::print ("Adjust whether nick colours are per-channel or global.");
-			#Irssi::print ("/color global on: a nick's colour will be the same everywhere");
-			#Irssi::print ("/color global off: a nick's color can be different in each channel");
-			if ($global == 1) {
-				Irssi::print ("Global colouring is on. \"/color global off\" to switch to per-channel colouring.");
-			} else {
-				Irssi::print ("Global colouring is off. \"/color global on\" to switch to global colouring.");
-			}
 		}
 	}
 }
@@ -515,3 +502,4 @@ Irssi::signal_add('message irc action', 'sig_act_public');
 Irssi::signal_add('event nick', 'sig_nick');
 
 Irssi::settings_add_int('misc','colorlevel',1);
+Irssi::settings_add_bool('misc','nickcolor_global',0);
