@@ -345,15 +345,15 @@ sub sig_public {
 
 		foreach ($chan->nicks())
 		{
-			my $nick=$_->{nick};
-			next if($mynick eq $nick);
+			my $inick=$_->{nick};
+			next if($mynick eq $inick);
 
 
-			if(index($msg,$nick) != -1)
+			if(index($msg,$inick) != -1)
 			{
-				my $color=best_color($server, $msg, $nick, $address, $target);
-				my $tar=chr(3).$color.$nick.chr(15);
-				$msg=~s/(^|\b|\W)(\Q$nick\E)($|\b|\W)/$1.$tar.$3/ge;
+				my $color=best_color($server, $msg, $inick, $address, $target);
+				my $tar=chr(3).$color.$inick.chr(15);
+				$msg=~s/(^|\b|\W)(\Q$inick\E)($|\b|\W)/$1.$tar.$3/ge;
 			}
 		}
 
@@ -399,7 +399,7 @@ sub sig_act_public {
 			{
 				my $color=best_color($server, $msg, $inick, $address, $target);
 				my $tar=chr(3).$color.$inick.chr(15);
-				$msg=~s/(^|\b|\W)(\Q$nick\E)($|\b|\W)/$1.$tar.$3/ge;
+				$msg=~s/(^|\b|\W)(\Q$inick\E)($|\b|\W)/$1.$tar.$3/ge;
 			}
 		}
 
