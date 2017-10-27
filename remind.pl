@@ -17,10 +17,15 @@ $VERSION = '0.1';
 
 our %timers;
 
-sub remind {
+sub print_to_window {
     my ( $text ) = @_;
     my ( $window ) = Irssi::window_find_name('hilight');
-    $window->print("%6[reminder]%N It's been %C$timers{$text}->{'duration'}%N since %C$text%N was started at $timers{$text}->{'started'}.", MSGLEVEL_NEVER) if ($window);
+    $window->print("%6 [ r e m i n d e r ] %N $text", MSGLEVEL_NEVER) if ($window);
+}
+
+sub remind {
+    my ( $text ) = @_;
+    print_to_window("Hey! It's been %C$timers{$text}->{'duration'}%N since %C$text%N was started." );
     command('beep');
     cmd_remove_timer($text); 
 }
@@ -96,7 +101,7 @@ command_bind 'remind add' => sub {
         return;
     };
 
-    print( CRAP "In $duration, I'll remind you: $text" );
+    print_to_window( "In %C$duration%N, I'll remind you about %C$text%N." );
     $timers{$text}->{'duration'} = $duration;
     $timers{$text}->{'timer'} = timeout_add_once( $millisec, \&remind, $text );
     $timers{$text}->{'started'} = strftime "%H:%M:%S", localtime;
@@ -104,12 +109,12 @@ command_bind 'remind add' => sub {
 
 command_bind 'remind list' => sub {
     if (%timers) {
-        print( CRAP "Active reminders:" );
+        print_to_window( "Active reminders:" );
         foreach my $text ( keys %timers ) {
-            print( CRAP "  $timers{$text}->{'duration'} after $timers{$text}->{'started'}, $text");
+            print_to_window( "  %C$text%N, reminding %C$timers{$text}->{'duration'}%N after %C$timers{$text}->{'started'}%N.");
         }
     } else {
-        print( CRAP "No active reminders.");
+        print_to_window( "No active reminders.");
     }
 };
 
@@ -122,7 +127,7 @@ command_bind 'remind nvm' => sub {
     } elsif ( $removed == 0 ) {
         print( CRAP "No such reminder: $text." );
     } else {
-        print( CRAP "Removed reminder: $text." );
+        print_to_window( "Removed reminder: %C$text%N." );
     }
 };
 
