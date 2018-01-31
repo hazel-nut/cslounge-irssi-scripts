@@ -12,7 +12,7 @@ $VERSION = "0.1";
 );
 
 if (!defined($ENV{STY})) { # not running in screen
-	return;
+    return;
 }
 
 # socket path code + screen_attached() taken from irssinotifier
@@ -21,11 +21,11 @@ if (!defined($ENV{STY})) { # not running in screen
 my $screen_socket_path;
 my $screen_ls = `LC_ALL="C" screen -ls 2> /dev/null`;
 if ($screen_ls !~ /^No Sockets found/s) {
-	$screen_ls =~ /Sockets? in (.+)\./s; # but this regex is different
-	$screen_socket_path = $1;
+    $screen_ls =~ /Sockets? in (.+)\./s; # but this regex is different
+    $screen_socket_path = $1;
 } else {
-	$screen_ls =~ /^No Sockets found in ([^\n]+)\.\n.+$/s;
-	$screen_socket_path = $1;
+    $screen_ls =~ /^No Sockets found in ([^\n]+)\.\n.+$/s;
+    $screen_socket_path = $1;
 }
 
 sub screen_attached {
