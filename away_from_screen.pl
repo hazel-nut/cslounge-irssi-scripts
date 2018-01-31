@@ -40,14 +40,14 @@ sub screen_attached {
 }
 
 sub set_away_from_screen {
-	my ($server);
-	foreach $server (Irssi::servers()) {
-		if (screen_attached() && $server->{usermode_away}) {
-			$server->command('AWAY');
-		} elsif (!screen_attached() && !$server->{usermode_away}) {
-			$server->command('AWAY ' . Irssi::settings_get_str($IRSSI{'name'} . '_message'));
-		}
-	}
+    my ($server);
+    foreach $server (Irssi::servers()) {
+        if (screen_attached() && $server->{usermode_away}) {
+            $server->command('AWAY');
+        } elsif (!screen_attached() && !$server->{usermode_away}) {
+            $server->command('AWAY ' . Irssi::settings_get_str($IRSSI{'name'} . '_message'));
+        }
+    }
 }
 
 Irssi::settings_add_str('misc', $IRSSI{'name'} . '_message', "not here ...");
